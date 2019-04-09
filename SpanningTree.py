@@ -25,21 +25,16 @@ def switchesConnection(problemNum,listOFproblems,switches):
     for connection in connectionSetup:
         switchesConnections.append(tuple(connection.split("-")))
     for a,b in switchesConnections: 
-        if(switches[int(a)].switchesConnectedTo.count(int(b))>0):
-            switches[int(a)].switchesConnectedTo.append(-1)
-            switches[int(b)].switchesConnectedTo.append(-1)
-        else:
-            switches[int(a)].switchesConnectedTo.append(int(b))
-            switches[int(b)].switchesConnectedTo.append(int(a))
+        switches[int(a)].switchesConnectedTo.append(int(b))
+        switches[int(b)].switchesConnectedTo.append(int(a))
 
 def sending(switches):
     for switch in switches.values():
-        for physicalConnection in switch.switchesConnectedTo:
-            if physicalConnection ==-1:
-                continue
-            port = switch.switchesConnectedTo.index(physicalConnection)+1
+        #for physicalConnection in switch.switchesConnectedTo:
+        for x in range(0,len(switch.switchesConnectedTo)): 
+            port = x+1
             packet =[switch.id,switch.root,switch.numOFhubs,port]
-            switches[physicalConnection].packetsReceived.append(tuple(packet))
+            switches[switch.switchesConnectedTo[x]].packetsReceived.append(tuple(packet))
 
 def receiving(switches):
     for switch in switches.values():
@@ -53,6 +48,15 @@ def receiving(switches):
 myswitches = createSwitches(1,fileInput)
 switchesConnection(1,fileInput,myswitches)
 sending(myswitches) 
+
+print(1,myswitches[1].packetsReceived)
+print(2,myswitches[2].packetsReceived)
+print(3,myswitches[3].packetsReceived)
+print(4,myswitches[4].packetsReceived)
+print(5,myswitches[5].packetsReceived)
+
+
+'''
 print(1,myswitches[1].root,myswitches[1].numOFhubs)
 print(2,myswitches[2].root,myswitches[2].numOFhubs)
 print(3,myswitches[3].root,myswitches[3].numOFhubs)
@@ -65,4 +69,4 @@ print(1,myswitches[1].root,myswitches[1].numOFhubs)
 print(2,myswitches[2].root,myswitches[2].numOFhubs)
 print(3,myswitches[3].root,myswitches[3].numOFhubs)
 print(4,myswitches[4].root,myswitches[4].numOFhubs)
-print(5,myswitches[5].root,myswitches[5].numOFhubs)
+print(5,myswitches[5].root,myswitches[5].numOFhubs)'''

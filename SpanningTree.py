@@ -30,10 +30,13 @@ def switchesConnection(problemNum,listOFproblems,switches):
 
 def sending(switches):
     for switch in switches.values():
-        for x in range(0,len(switch.switchesConnectedTo)): 
+        for x in range(0,len(switch.switchesConnectedTo)):
             port = x+1
             packet =[switch.id,switch.root,switch.numOFhubs,port]
-            switches[switch.switchesConnectedTo[x].id].packetsReceived.append(tuple(packet))
+            if switch.switchesConnectedTo[x]==-1:
+                continue
+            else:
+                switches[switch.switchesConnectedTo[x].id].packetsReceived.append(tuple(packet))
 
 def validateOnePortPerTwoSwitchConnections(switches):
     for switch in switches.values():
@@ -44,9 +47,6 @@ def validateOnePortPerTwoSwitchConnections(switches):
             for port in portsOfTheseSources[1:]:
                 switch.switchesConnectedTo[port]=-1
 
-
-
-        
 def receiving(switches):
     for switch in switches.values():
         for (a,b,c,d) in switch.packetsReceived:
@@ -59,36 +59,29 @@ def receiving(switches):
 myswitches = createSwitches(1,fileInput)
 switchesConnection(1,fileInput,myswitches)
 sending(myswitches) 
-print(1,myswitches[1].packetsReceived)
-print(2,myswitches[2].packetsReceived)
-print(3,myswitches[3].packetsReceived)
-print(4,myswitches[4].packetsReceived)
-print(5,myswitches[5].packetsReceived)
-print(1,myswitches[1].switchesConnectedTo)
-print(2,myswitches[2].switchesConnectedTo)
-print(3,myswitches[3].switchesConnectedTo)
-print(4,myswitches[4].switchesConnectedTo)
-print(5,myswitches[5].switchesConnectedTo)
+for x in myswitches.values():
+    print(x.id,x.packetsReceived)
+
+print()
+for switch in myswitches.values():
+    l20 =list()
+    for switch2 in switch.switchesConnectedTo:
+        if switch2 == -1:
+            l20.append(switch2)
+        else:
+            l20.append(switch2.id)
+    print(switch.id,l20)  
 
 validateOnePortPerTwoSwitchConnections(myswitches)
-print("after")
-print(1,myswitches[1].switchesConnectedTo)
-print(2,myswitches[2].switchesConnectedTo)
-print(3,myswitches[3].switchesConnectedTo)
-print(4,myswitches[4].switchesConnectedTo)
-print(5,myswitches[5].switchesConnectedTo)
+print()
+for switch in myswitches.values():
+    l20 =list()
+    for switch2 in switch.switchesConnectedTo:
+        if switch2 == -1:
+            l20.append(switch2)
+        else:
+            l20.append(switch2.id)
+    print(switch.id,l20)     
 
-'''
-print(1,myswitches[1].root,myswitches[1].numOFhubs)
-print(2,myswitches[2].root,myswitches[2].numOFhubs)
-print(3,myswitches[3].root,myswitches[3].numOFhubs)
-print(4,myswitches[4].root,myswitches[4].numOFhubs)
-print(5,myswitches[5].root,myswitches[5].numOFhubs)
-
-receiving(myswitches)
-print("After first round receivng")
-print(1,myswitches[1].root,myswitches[1].numOFhubs)
-print(2,myswitches[2].root,myswitches[2].numOFhubs)
-print(3,myswitches[3].root,myswitches[3].numOFhubs)
-print(4,myswitches[4].root,myswitches[4].numOFhubs)
-print(5,myswitches[5].root,myswitches[5].numOFhubs)'''
+for x in myswitches.values():
+    print(x.id,x.packetsReceived)

@@ -38,50 +38,49 @@ def sending(switches):
             else:
                 switches[switch.switchesConnectedTo[x].id].packetsReceived.append(tuple(packet))
 
-def validateOnePortPerTwoSwitchConnections(switches):
-    for switch in switches.values():
-        packetsSources =[a for a,b,c,d in switch.packetsReceived]
-        sourcesWithMultiplePacketsSent = set([x for x in packetsSources if packetsSources.count(x)>1])
-        for x in sourcesWithMultiplePacketsSent:
-            portsOfTheseSources = [i for i,z in enumerate(switch.switchesConnectedTo) if z.id == x]
-            for port in portsOfTheseSources[1:]:
-                switch.switchesConnectedTo[port]=-1
-
 def receiving(switches):
     for switch in switches.values():
-        for (a,b,c,d) in switch.packetsReceived:
-            if b < switch.root:
-                print("updating ",switch.id)
-                switch.root = b
-                switch.numOFhubs = c+1
+        l10 =list()
+        counter=0
+        packets = switch.packetsReceived[:]
+        for (a,b,c,d) in packets:
+            if a in l10:
+                switch.switchesConnectedTo[counter]=-1
+                switches[a].switchesConnectedTo[counter-1]=-1
+                del(switches[a].packetsReceived[d-1])
+            else:
+                l10.append(a)
+                if b < switch.root:
+                    print("updating ",switch.id)
+                    switch.root = b
+                    switch.numOFhubs = c+1
+            counter+=1
             switch.packetsReceived.remove((a,b,c,d))
+myswitches = createSwitches(2,fileInput)
+switchesConnection(2,fileInput,myswitches)
+sameRootAll =False
+while(sameRootAll==False):
+    print("in loop ")
+    sending(myswitches) 
+    receiving(myswitches)
+    for x in myswitches.values():
+        if x.root!=1:
+            break
+    else:
+        sameRootAll=True
+        print("Done")
 
-myswitches = createSwitches(1,fileInput)
-switchesConnection(1,fileInput,myswitches)
-sending(myswitches) 
 for x in myswitches.values():
-    print(x.id,x.packetsReceived)
+    print(x.id,x.root,x.numOFhubs)
+    
 
-print()
-for switch in myswitches.values():
+
+
+'''for switch in myswitches.values():
     l20 =list()
     for switch2 in switch.switchesConnectedTo:
         if switch2 == -1:
             l20.append(switch2)
         else:
             l20.append(switch2.id)
-    print(switch.id,l20)  
-
-validateOnePortPerTwoSwitchConnections(myswitches)
-print()
-for switch in myswitches.values():
-    l20 =list()
-    for switch2 in switch.switchesConnectedTo:
-        if switch2 == -1:
-            l20.append(switch2)
-        else:
-            l20.append(switch2.id)
-    print(switch.id,l20)     
-
-for x in myswitches.values():
-    print(x.id,x.packetsReceived)
+    print(switch.id,l20)  '''

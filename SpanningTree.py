@@ -1,11 +1,16 @@
 class Switch():
     def __init__(self,id):
+        self.port =1
         self.id=id
         self.root=id
         self.neighbors =list()
         self.hubsToRoot =0
         self.packetsBuffer =list()
-
+    def updatePortCounter(self):
+        self.port+=1
+    def resetPortCounter(self):
+        self.port=1
+        
 DROPPED_PORT = -1
 switchesTests = list()
 with open("input.txt") as myFile:
@@ -37,43 +42,40 @@ def buildSwitches(amount):
     return switchObjects   
 
 def buildSwitchesConnections(switches,connectionsToBeMade):
-    ports = dict()
-    for switch in switches:
-        ports[switch]=[]
     for leftSwitch,rightSwitch in connectionsToBeMade:
         switchA = switches[leftSwitch]
         switchB = switches[rightSwitch] 
-        switchA.neighbors.append(switchB)
-        ports[switchA.id].append(len(ports[switchA.id])+1)
-        switchB.neighbors.append(switchA)
-        ports[switchB.id].append(len(ports[switchB.id])+1)    
-    for leftSwitch,rightSwitch in connectionsToBeMade:
-       print("Source Switch {} Port Number {}-----Destination Switch {} Port Number {}".format(leftSwitch,ports[leftSwitch].pop(0),rightSwitch,ports[rightSwitch].pop(0)))
-
-
+        switchA.neighbors.append(tuple((switchB.port,switchB)))
+        print("Source Switch {} Port Number {}-----Destination Switch {} Port Number {}".format(switchA.id,switchA.port,switchB.id,switchB.port))
+        switchB.updatePortCounter()
+        switchB.neighbors.append(tuple((switchA.port,switchA)))
+        switchA.updatePortCounter()
+        
 def broadcasting(switchesMap):
     myswitches = switchesMap.values()
     for senderSwitch in myswitches:
-        for neighborIndex in range(0,len(senderSwitch.neighbors)):
-            currentNeighbor = senderSwitch.neighbors[neighborIndex]
-            neighborPort = neighborIndex+1
-            senderSwitchPacket =[senderSwitch.id,senderSwitch.root,senderSwitch.hubsToRoot,neighborPort]
+        senderSwitch.resetPortCounter()
+        for neighbor in senderSwitch.neighbors:
+            neighborPort = neighbor[0]
+            currentNeighbor = neighbor[1]
+            senderPort = senderSwitch.port
+            packet =[senderSwitch.id,senderSwitch.root,senderSwitch.hubsToRoot,senderPort,neighborPort]
             if currentNeighbor == DROPPED_PORT:
                 continue
             else:
-                currentNeighbor.packetsBuffer.append(tuple(senderSwitchPacket))
+                currentNeighbor.packetsBuffer.append(tuple(packet))
+            senderSwitch.updatePortCounter()
                 
 
 def receiving(round,switchesMap):
     myswitches = switchesMap.values()
     for receiverSwitch in myswitches:
         processedSwitchesIPs =list()
-        senderSwitchIndex = 0
         receiverPackets = receiverSwitch.packetsBuffer[:]
-        for (senderId,senderRoot,SenderNumHubs,senderPort) in receiverPackets:
+        for (senderId,senderRoot,SenderNumHubs,senderPort,receiverPort) in receiverPackets:
             if round ==1:
                 if senderId in processedSwitchesIPs:
-                    receiverSwitch.neighbors[senderSwitchIndex]=DROPPED_PORT
+                    receiverSwitch.neighbors[receiverPort-1]=DROPPED_PORT
                     switchesMap[senderId].neighbors[senderPort-1]=DROPPED_PORT
                     del(switchesMap[senderId].packetsBuffer[senderPort-1])
                 else:
@@ -81,28 +83,33 @@ def receiving(round,switchesMap):
             if senderRoot < receiverSwitch.root:
                 receiverSwitch.root = senderRoot
                 receiverSwitch.hubsToRoot = SenderNumHubs+1
-            senderSwitchIndex+=1
-            receiverSwitch.packetsBuffer.remove((senderId,senderRoot,SenderNumHubs,senderPort))
+            receiverSwitch.packetsBuffer.remove((senderId,senderRoot,SenderNumHubs,senderPort,receiverPort))
+
 def printSwitchesStates(switches):
     myswitches = switches.values()
     for switch in myswitches:
-        portCounter =1
+        switch.resetPortCounter()
         for neighbor in switch.neighbors:
-            print("Source Switch {} Port Number {}-----Destination Switch {} Port Number {}".format(switch.id,portCounter,neighbor.id,"fix"))
-            portCounter+=1
+            if neighbor==-1:
+                switch.updatePortCounter()
+                continue
+            else:
+                print("Source Switch {} Port Number {}-----Destination Switch {} Port Number {}".format(switch.id,switch.port,neighbor[1].id,neighbor[0]))
+            switch.updatePortCounter()
 
 def printStatus(switches):
     for switch in myswitches.values():
         print("SwitchId {} sends--> {} {} {}".format(switch.id,switch.id,switch.root,switch.hubsToRoot))
 
 
-numberOFswitches,connectionsbetweenSwitches = eachTestComponent(2,switchesTests)
+
+
+numberOFswitches,connectionsbetweenSwitches = eachTestComponent(1,switchesTests)
 myswitches = buildSwitches(numberOFswitches)
 print("Printing Initial Connections")
 print("*"*70)
 buildSwitchesConnections(myswitches,connectionsbetweenSwitches)
 sameRootAll =False
-#printSwitchesStates(myswitches)
 print("*"*70)
 print("Initial Status of Switches")
 print("*"*30)
@@ -125,5 +132,6 @@ while(sameRootAll==False):
             break
     else:
         sameRootAll=True
-
-
+print("Printing Final Connections")
+print("*"*70)
+printSwitchesStates(myswitches)

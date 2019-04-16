@@ -3,9 +3,9 @@ class Switch():
         self.port =1
         self.id=id
         self.root=id
-        self.neighbors =list()
+        self.neighbors =dict()
         self.hubsToRoot =0
-        self.packetsBuffer =list()
+        self.packetsBuffer =dict()
     def updatePortCounter(self):
         self.port+=1
     def resetPortCounter(self):
@@ -45,57 +45,47 @@ def buildSwitchesConnections(switches,connectionsToBeMade):
     for leftSwitch,rightSwitch in connectionsToBeMade:
         switchA = switches[leftSwitch]
         switchB = switches[rightSwitch] 
-        switchA.neighbors.append(tuple((switchB.port,switchB)))
+        switchA.neighbors[switchA.port]=tuple((switchB.port,switchB))
         print("Source Switch {} Port Number {}-----Destination Switch {} Port Number {}".format(switchA.id,switchA.port,switchB.id,switchB.port))
-        switchB.updatePortCounter()
-        switchB.neighbors.append(tuple((switchA.port,switchA)))
+        switchB.neighbors[switchB.port]=tuple((switchA.port,switchA))
         switchA.updatePortCounter()
+        switchB.updatePortCounter()
         
 def broadcasting(switchesMap):
     myswitches = switchesMap.values()
     for senderSwitch in myswitches:
-        senderSwitch.resetPortCounter()
-        for neighbor in senderSwitch.neighbors:
+        for port,neighbor in senderSwitch.neighbors.items():
             neighborPort = neighbor[0]
             currentNeighbor = neighbor[1]
-            senderPort = senderSwitch.port
-            packet =[senderSwitch.id,senderSwitch.root,senderSwitch.hubsToRoot,senderPort,neighborPort]
-            if currentNeighbor == DROPPED_PORT:
-                continue
-            else:
-                currentNeighbor.packetsBuffer.append(tuple(packet))
-            senderSwitch.updatePortCounter()
+            senderPort = port
+            packet =[senderSwitch.id,senderSwitch.root,senderSwitch.hubsToRoot,senderPort]
+            currentNeighbor.packetsBuffer[neighborPort]=tuple(packet)
                 
 
 def receiving(round,switchesMap):
     myswitches = switchesMap.values()
     for receiverSwitch in myswitches:
         processedSwitchesIPs =list()
-        receiverPackets = receiverSwitch.packetsBuffer[:]
-        for (senderId,senderRoot,SenderNumHubs,senderPort,receiverPort) in receiverPackets:
+        receiverPackets = receiverSwitch.packetsBuffer.items()
+        for a,(senderId,senderRoot,SenderNumHubs,senderPort) in receiverPackets:
             if round ==1:
                 if senderId in processedSwitchesIPs:
-                    receiverSwitch.neighbors[receiverPort-1]=DROPPED_PORT
-                    switchesMap[senderId].neighbors[senderPort-1]=DROPPED_PORT
-                    del(switchesMap[senderId].packetsBuffer[senderPort-1])
+                    del(receiverSwitch.neighbors[a])
+                    del(switchesMap[senderId].neighbors[senderPort])
+                    del(switchesMap[senderId].packetsBuffer[senderPort])
                 else:
                     processedSwitchesIPs.append(senderId)
             if senderRoot < receiverSwitch.root:
                 receiverSwitch.root = senderRoot
                 receiverSwitch.hubsToRoot = SenderNumHubs+1
-            receiverSwitch.packetsBuffer.remove((senderId,senderRoot,SenderNumHubs,senderPort,receiverPort))
+        receiverSwitch.packetsBuffer.clear()
 
 def printSwitchesStates(switches):
     myswitches = switches.values()
     for switch in myswitches:
         switch.resetPortCounter()
-        for neighbor in switch.neighbors:
-            if neighbor==-1:
-                switch.updatePortCounter()
-                continue
-            else:
-                print("Source Switch {} Port Number {}-----Destination Switch {} Port Number {}".format(switch.id,switch.port,neighbor[1].id,neighbor[0]))
-            switch.updatePortCounter()
+        for port,neighbor in switch.neighbors.items():
+            print("Source Switch {} Port Number {}-----Destination Switch {} Port Number {}".format(switch.id,port,neighbor[1].id,neighbor[0]))
 
 def printStatus(switches):
     for switch in myswitches.values():
